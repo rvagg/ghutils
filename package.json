@@ -1,0 +1,16 @@
+{
+  "name": "ghutils",
+  "version": "1.0.0",
+  "description": "A collection of utility functions for dealing with the GitHub API",
+  "main": "ghutils.js",
+  "author": "Rod <rod@vagg.org> (http://r.va.gg/)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rvagg/ghutils.git"
+  },
+  "dependencies": {
+    "jsonist": "~1.0.2",
+    "xtend": "~4.0.0"
+  }
+}
