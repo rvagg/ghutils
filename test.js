@@ -1,7 +1,6 @@
 const http           = require('http')
-    , test           = require('tape')
-    , xtend          = require('xtend')
     , EE             = require('events').EventEmitter
+    , xtend          = require('xtend')
     , bl             = require('bl')
     , jsonist        = require('jsonist')
     , _jsonistget    = jsonist.get

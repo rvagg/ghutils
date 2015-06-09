@@ -10,6 +10,7 @@
     "url": "https://github.com/rvagg/ghutils.git"
   },
   "dependencies": {
+    "bl": "~0.9.4",
     "jsonist": "~1.0.2",
     "xtend": "~4.0.0"
   }
