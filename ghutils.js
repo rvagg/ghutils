@@ -45,29 +45,35 @@ function issuesList (type) {
       options  = {}
     }
 
-    var issues = []
-      , optqs  = qs.stringify(options)
-
-    if (optqs)
-      optqs = '&' + optqs
-
-    //TODO: use 'Link' headers to improve the guesswork here
-    ;(function next (page) {
-      var url = 'https://api.github.com/repos/' + org + '/' + repo + '/' + type + '?page=' + page + optqs
-
-      ghget(auth, url, options, function (err, data) {
-        if (err)
-          return callback(err)
-
-        if (!data.length)
-          return callback(null, issues)
-
-        issues.push.apply(issues, data)
-
-        next(page + 1)
-      })
-    }(1))
+    var url = 'https://api.github.com/repos/' + org + '/' + repo + '/' + type + '?page=' + page + optqs
+    lister(auth, url, options, callback)
   }
+}
+
+
+function lister (auth, urlbase, options, callback) {
+  var retdata = []
+    , optqs  = qs.stringify(options)
+
+  if (optqs)
+    optqs = '&' + optqs
+
+  //TODO: use 'Link' headers to improve the guesswork here
+  ;(function next (page) {
+    var url = urlbase + '?page=' + page + optqs
+
+    ghget(auth, url, options, function (err, data) {
+      if (err)
+        return callback(err)
+
+      if (!data.length)
+        return callback(null, retdata)
+
+      retdata.push.apply(retdata, data)
+
+      next(page + 1)
+    })
+  }(1))
 }
 
 
@@ -76,3 +82,4 @@ module.exports.ghpost      = ghpost
 module.exports.ghget       = ghget
 module.exports.handler     = handler
 module.exports.issuesList  = issuesList
+module.exports.lister      = lister

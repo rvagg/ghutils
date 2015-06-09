@@ -20,6 +20,10 @@ Make a GitHub API compatible POST request to the given URL via [jsonist](http://
 
 Make a GitHub API compatible GET request to the given URL via [jsonist](http://github.com/rvagg/jsonist), uses `makeOptions()` to extend the options. Requires a GitHub auth from [ghauth](https://github.com/rvagg/ghauth) and any additional options.
 
+### lister(auth, urlbase, options, callback)
+
+Given a paginated url resource, recursively fetch all available pages of data and return an array containing the complete list.
+
 ### issuesList(type)
 
 Creates an issues or pull requests fetching function where `type` is either `'issues'` or `'pulls'`. The function returned has the signature: `function list (auth, org, repo, options, callback)`.
