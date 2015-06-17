@@ -45,7 +45,7 @@ function issuesList (type) {
       options  = {}
     }
 
-    var url = 'https://api.github.com/repos/' + org + '/' + repo + '/' + type + '?page=' + page + optqs
+    var url = 'https://api.github.com/repos/' + org + '/' + repo + '/' + type
     lister(auth, url, options, callback)
   }
 }
