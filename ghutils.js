@@ -2,6 +2,8 @@ const jsonist = require('jsonist')
     , xtend   = require('xtend')
     , qs      = require('querystring')
 
+    , apiRoot = 'https://api.github.com'
+
 
 function makeOptions (auth, options) {
   return xtend({
@@ -45,7 +47,7 @@ function issuesList (type) {
       options  = {}
     }
 
-    var url = 'https://api.github.com/repos/' + org + '/' + repo + '/' + type
+    var url = apiRoot + '/repos/' + org + '/' + repo + '/' + type
     lister(auth, url, options, callback)
   }
 }
@@ -83,3 +85,4 @@ module.exports.ghget       = ghget
 module.exports.handler     = handler
 module.exports.issuesList  = issuesList
 module.exports.lister      = lister
+module.exports.apiRoot     = apiRoot
