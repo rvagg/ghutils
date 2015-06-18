@@ -28,6 +28,10 @@ Given a paginated url resource, recursively fetch all available pages of data an
 
 Creates an issues or pull requests fetching function where `type` is either `'issues'` or `'pulls'`. The function returned has the signature: `function list (auth, org, repo, options, callback)`.
 
+### apiRoot
+
+The api root url `'https://api.github.com'`.
+
 ## License & Copyright
 
 **ghutils** is Copyright (c) 2015 Rod Vagg [@rvagg](https://twitter.com/rvagg) and licensed under the MIT licence. All rights not explicitly granted in the MIT license are reserved. See the included LICENSE.md file for more details.
