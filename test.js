@@ -28,6 +28,11 @@ function makeServer (data) {
           return _jsonistget('http://localhost:' + server.address().port, opts, callback)
         }
 
+        jsonist.post = function (url, data,  opts, callback) {
+          ee.emit('post', url, data, opts)
+          return _jsonistpost('http://localhost:' + server.address().port, data, opts, callback)
+        }
+
         ee.emit('ready')
       })
       .on('close', ee.emit.bind(ee, 'close'))
