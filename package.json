@@ -13,5 +13,10 @@
     "jsonist": "~1.0.2",
     "xtend": "~4.0.0"
   },
-  "scripts": {}
+  "scripts": {
+    "test": "tape test.js"
+  },
+  "devDependencies": {
+    "tape": "~4.0.0"
+  }
 }

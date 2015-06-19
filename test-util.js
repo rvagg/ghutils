@@ -13,7 +13,11 @@ function makeServer (data) {
         ee.emit('request', req)
 
         var _data = Array.isArray(data) ? data[i++] : data
-        res.end(JSON.stringify(_data))
+
+        if (_data.headers && _data.headers.link)
+          res.setHeader('link', _data.headers.link)
+
+        res.end(JSON.stringify(_data.response || _data))
 
         if (!Array.isArray(data) || i == data.length)
           server.close()
