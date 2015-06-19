@@ -1,7 +1,6 @@
 const http           = require('http')
     , EE             = require('events').EventEmitter
     , xtend          = require('xtend')
-    , bl             = require('bl')
     , jsonist        = require('jsonist')
     , _jsonistget    = jsonist.get
     , _jsonistpost   = jsonist.post
