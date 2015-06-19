@@ -47,7 +47,7 @@ function lister (auth, urlbase, options, callback) {
   ;(function next (url) {
 
     if (optqs)
-      url += optqs
+      url += '&' + optqs
 
     ghget(auth, url, options, function (err, data, res) {
       if (err)
