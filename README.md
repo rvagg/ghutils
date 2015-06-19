@@ -24,10 +24,6 @@ Make a GitHub API compatible GET request to the given URL via [jsonist](http://g
 
 Given a paginated url resource, recursively fetch all available pages of data and return an array containing the complete list.
 
-### issuesList(type)
-
-Creates an issues or pull requests fetching function where `type` is either `'issues'` or `'pulls'`. The function returned has the signature: `function list (auth, org, repo, options, callback)`.
-
 ### apiRoot
 
 The api root url `'https://api.github.com'`.
