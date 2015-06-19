@@ -40,19 +40,6 @@ function ghpost (auth, url, data, options, callback) {
 }
 
 
-function issuesList (type) {
-  return function list (auth, org, repo, options, callback) {
-    if (typeof options == 'function') {
-      callback = options
-      options  = {}
-    }
-
-    var url = apiRoot + '/repos/' + org + '/' + repo + '/' + type
-    lister(auth, url, options, callback)
-  }
-}
-
-
 function lister (auth, urlbase, options, callback) {
   var retdata = []
     , optqs  = qs.stringify(options)
@@ -83,6 +70,5 @@ module.exports.makeOptions = makeOptions
 module.exports.ghpost      = ghpost
 module.exports.ghget       = ghget
 module.exports.handler     = handler
-module.exports.issuesList  = issuesList
 module.exports.lister      = lister
 module.exports.apiRoot     = apiRoot
