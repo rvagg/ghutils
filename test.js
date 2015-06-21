@@ -11,12 +11,12 @@ test('that lister follows res.headers.link', function (t) {
     , org      = 'testorg'
     , testData = [
           {
-              response: [ { test3: 'data3' }, { test4: 'data4' } ]
-            , headers: { link: '<https://somenexturl>; rel="next"' }
+              response : [ { test3: 'data3' }, { test4: 'data4' } ]
+            , headers  : { link: '<https://somenexturl>; rel="next"' }
           }
-        ,  {
-              response: [ { test5: 'data5' }, { test6: 'data6' } ]
-            , headers: { link: '<https://somenexturl2>; rel="next"' }
+        , {
+              response : [ { test5: 'data5' }, { test6: 'data6' } ]
+            , headers  : { link: '<https://somenexturl2>; rel="next"' }
           }
         , []
       ]
