@@ -14,14 +14,14 @@ function makeOptions (auth, options) {
 
 
 function handler (callback) {
-  return function responseHandler (err, data) {
+  return function responseHandler (err, data, res) {
     if (err)
       return callback(err)
 
     if (data.error || data.message)
       return callback(new Error('Error from GitHub: ' + (data.error || data.message)))
 
-    callback(null, data)
+    callback(null, data, res)
   }
 }
 
@@ -44,25 +44,32 @@ function lister (auth, urlbase, options, callback) {
   var retdata = []
     , optqs  = qs.stringify(options)
 
-  if (optqs)
-    optqs = '&' + optqs
+  ;(function next (url) {
 
-  //TODO: use 'Link' headers to improve the guesswork here
-  ;(function next (page) {
-    var url = urlbase + '?page=' + page + optqs
+    if (optqs)
+      url += '&' + optqs
 
-    ghget(auth, url, options, function (err, data) {
+    ghget(auth, url, options, function (err, data, res) {
       if (err)
         return callback(err)
 
-      if (!data.length)
-        return callback(null, retdata)
+      if (data.length)
+        retdata.push.apply(retdata, data)
 
-      retdata.push.apply(retdata, data)
+      var nextUrl = getNextUrl(res.headers.link)
+      if (nextUrl)
+        return next(nextUrl)
 
-      next(page + 1)
+      callback(null, retdata)
     })
-  }(1))
+  }(urlbase))
+
+  function getNextUrl (link) {
+    if (typeof link == 'undefined')
+      return
+    var match = /<(.*)>; rel="next"/.exec(link)
+    return match && match[1]
+  }
 }
 
 

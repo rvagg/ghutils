@@ -1,88 +1,39 @@
-const http           = require('http')
-    , EE             = require('events').EventEmitter
-    , xtend          = require('xtend')
-    , bl             = require('bl')
-    , jsonist        = require('jsonist')
-    , _jsonistget    = jsonist.get
-    , _jsonistpost   = jsonist.post
+const test    = require('tape')
+    , xtend   = require('xtend')
+    , util    = require('./test-util')
+    , ghutils = require('./')
 
 
-function makeServer (data) {
-  var ee     = new EE()
-    , i      = 0
-    , server = http.createServer(function (req, res) {
-        ee.emit('request', req)
+test('that lister follows res.headers.link', function (t) {
+  t.plan(13)
 
-        var _data = Array.isArray(data) ? data[i++] : data
-        res.end(JSON.stringify(_data))
+  var auth     = { user: 'authuser', token: 'authtoken' }
+    , org      = 'testorg'
+    , testData = [
+          {
+              response : [ { test3: 'data3' }, { test4: 'data4' } ]
+            , headers  : { link: '<https://somenexturl>; rel="next"' }
+          }
+        , {
+              response : [ { test5: 'data5' }, { test6: 'data6' } ]
+            , headers  : { link: '<https://somenexturl2>; rel="next"' }
+          }
+        , []
+      ]
+    , urlBase  = 'https://api.github.com/foobar'
+    , server
 
-        if (!Array.isArray(data) || i == data.length)
-          server.close()
-      })
-      .listen(0, function (err) {
-        if (err)
-          return ee.emit('error', err)
+  server = util.makeServer(testData)
+    .on('ready', function () {
+      var result = testData[0].response.concat(testData[1].response)
+      ghutils.lister(xtend(auth), urlBase, {}, util.verifyData(t, result))
+    })
+    .on('request', util.verifyRequest(t, auth))
+    .on('get', util.verifyUrl(t, [
+        'https://api.github.com/foobar'
+      , 'https://somenexturl'
+      , 'https://somenexturl2'
+    ]))
+    .on('close'  , util.verifyClose(t))
 
-        jsonist.get = function (url, opts, callback) {
-          ee.emit('get', url, opts)
-          return _jsonistget('http://localhost:' + server.address().port, opts, callback)
-        }
-
-        jsonist.post = function (url, data,  opts, callback) {
-          ee.emit('post', url, data, opts)
-          return _jsonistpost('http://localhost:' + server.address().port, data, opts, callback)
-        }
-
-        ee.emit('ready')
-      })
-      .on('close', ee.emit.bind(ee, 'close'))
-
-  return ee
-}
-
-
-function toAuth (auth) {
-  return 'Basic ' + (new Buffer(auth.user + ':' + auth.token).toString('base64'))
-}
-
-
-function verifyRequest (t, auth) {
-  return function (req) {
-    t.ok(true, 'got request')
-    t.equal(req.headers['authorization'], toAuth(auth), 'got auth header')
-  }
-}
-
-
-function verifyUrl (t, urls) {
-  var i = 0
-  return function (_url) {
-    if (i == urls.length)
-      return t.fail('too many urls/requests')
-    t.equal(_url, urls[i++], 'correct url')
-  }
-}
-
-
-function verifyClose (t) {
-  return function () {
-    t.ok(true, 'got close')
-  }
-}
-
-
-function verifyData (t, data) {
-  return function (err, _data) {
-    t.notOk(err, 'no error')
-    t.ok((data === '' && _data === '') || _data, 'got data')
-    t.deepEqual(_data, data, 'got expected data')
-  }
-}
-
-
-module.exports.makeServer    = makeServer
-module.exports.toAuth        = toAuth
-module.exports.verifyRequest = verifyRequest
-module.exports.verifyUrl     = verifyUrl
-module.exports.verifyClose   = verifyClose
-module.exports.verifyData    = verifyData
+})
