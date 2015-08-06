@@ -18,7 +18,7 @@ function handler (callback) {
     if (err)
       return callback(err)
 
-    if (data.error || data.message)
+    if (data && (data.error || data.message))
       return callback(new Error('Error from GitHub: ' + (data.error || data.message)))
 
     callback(null, data, res)
