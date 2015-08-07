@@ -37,3 +37,64 @@ test('that lister follows res.headers.link', function (t) {
     .on('close'  , util.verifyClose(t))
 
 })
+
+test('valid response with null data calls back with null data', function (t) {
+  t.plan(5)
+
+  var auth     = { user: 'authuser', token: 'authtoken' }
+    , org      = 'testorg'
+    , testData = null
+    , urlBase  = 'https://api.github.com/foobar'
+    , server
+
+  server = util.makeServer(testData)
+    .on('ready', function () {
+      ghutils.ghget(xtend(auth), urlBase, {}, function (err, data) {
+        t.notOk(err, 'no error')
+        t.deepEqual(data, testData, 'got expected data')
+      })
+    })
+    .on('request', util.verifyRequest(t, auth))
+    .on('close'  , util.verifyClose(t))
+
+})
+
+test('data.message calls back with error', function (t) {
+  t.plan(4)
+
+  var auth     = { user: 'authuser', token: 'authtoken' }
+    , org      = 'testorg'
+    , testData = { message: 'borked borked' }
+    , urlBase  = 'https://api.github.com/foobar'
+    , server
+
+  server = util.makeServer(testData)
+    .on('ready', function () {
+      ghutils.ghget(xtend(auth), urlBase, {}, function (err, data) {
+        t.deepEqual(err, new Error('Error from GitHub: borked borked'))
+      })
+    })
+    .on('request', util.verifyRequest(t, auth))
+    .on('close'  , util.verifyClose(t))
+
+})
+
+test('data.error calls back with error', function (t) {
+  t.plan(4)
+
+  var auth     = { user: 'authuser', token: 'authtoken' }
+    , org      = 'testorg'
+    , testData = { error: 'borked borked' }
+    , urlBase  = 'https://api.github.com/foobar'
+    , server
+
+  server = util.makeServer(testData)
+    .on('ready', function () {
+      ghutils.ghget(xtend(auth), urlBase, {}, function (err, data) {
+        t.deepEqual(err, new Error('Error from GitHub: borked borked'))
+      })
+    })
+    .on('request', util.verifyRequest(t, auth))
+    .on('close'  , util.verifyClose(t))
+
+})
