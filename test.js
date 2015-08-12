@@ -35,7 +35,27 @@ test('that lister follows res.headers.link', function (t) {
       , 'https://somenexturl2'
     ]))
     .on('close'  , util.verifyClose(t))
+})
 
+test('that lister appends query string correctly', function (t) {
+  t.plan(3)
+  var urlBase  = 'https://api.github.com/foobar'
+
+  testListerUrl({}, 'https://api.github.com/foobar', function () {
+    testListerUrl({state: 'all'}, 'https://api.github.com/foobar?state=all', function () {
+      urlBase += '?param=1'
+      testListerUrl({state: 'all'}, 'https://api.github.com/foobar?param=1&state=all')
+    })
+  })
+
+  function testListerUrl (options, expectedUrl, done) {
+    util.makeServer([[]])
+      .on('ready', function () {
+        ghutils.lister({}, urlBase, options, function () {})
+      })
+      .on('get', util.verifyUrl(t, [expectedUrl]))
+      .on('close', done || function () {})
+  }
 })
 
 test('valid response with null data calls back with null data', function (t) {
