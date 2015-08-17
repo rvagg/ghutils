@@ -29,7 +29,7 @@ function handler (callback) {
 function ghget (auth, url, options, callback) {
   options = makeOptions(auth, options)
 
-  jsonist.get(url, options, handler(callback))
+  jsonist.get(url, xtend(options, { followRedirects: true }), handler(callback))
 }
 
 
