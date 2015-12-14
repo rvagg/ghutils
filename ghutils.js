@@ -42,7 +42,11 @@ function ghpost (auth, url, data, options, callback) {
 
 function lister (auth, urlbase, options, callback) {
   var retdata = []
-    , optqs  = qs.stringify(options)
+    , afterDate = (options.afterDate instanceof Date) && options.afterDate
+    , optqs
+
+  delete options.afterDate
+  optqs = qs.stringify(options)
 
   ;(function next (url) {
 
@@ -57,9 +61,20 @@ function lister (auth, urlbase, options, callback) {
         retdata.push.apply(retdata, data)
 
       var nextUrl = getNextUrl(res.headers.link)
-      if (nextUrl)
-        return next(nextUrl)
+        , createdAt
+      if (nextUrl) {
+        if (!afterDate || (
+              (createdAt = retdata[retdata.length - 1].created_at) && new Date(createdAt) > afterDate
+            )) {
+          return next(nextUrl)
+        }
+      }
 
+      if (afterDate) {
+        retdata = retdata.filter(function (data) {
+          return !data.created_at || new Date(data.created_at) > afterDate
+        })
+      }
       callback(null, retdata)
     })
   }(urlbase))
