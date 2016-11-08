@@ -1,9 +1,9 @@
 const jsonist = require('jsonist')
     , xtend   = require('xtend')
     , qs      = require('querystring')
+    , url     = require('url')
 
     , apiRoot = 'https://api.github.com'
-
 
 function makeOptions (auth, options) {
   return xtend({
@@ -51,7 +51,7 @@ function lister (auth, urlbase, options, callback) {
   ;(function next (url) {
 
     if (optqs)
-      url += '&' + optqs
+      url = appendQueryString(url, optqs)
 
     ghget(auth, url, options, function (err, data, res) {
       if (err)
@@ -84,6 +84,10 @@ function lister (auth, urlbase, options, callback) {
       return
     var match = /<(.*)>; rel="next"/.exec(link)
     return match && match[1]
+  }
+
+  function appendQueryString (urlbase, qs) {
+    return urlbase + (!!url.parse(urlbase).search ? '&' : '?') + optqs
   }
 }
 
