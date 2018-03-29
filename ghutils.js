@@ -6,10 +6,13 @@ const jsonist = require('jsonist')
 
 
 function makeOptions (auth, options) {
-  return xtend({
-      headers : { 'User-Agent' : 'Magic Node.js application that does magic things' }
-    , auth    : auth.user + ':' + auth.token
-  }, options)
+  var headers = xtend(
+      { 'user-agent' : 'Magic Node.js application that does magic things' }
+    , typeof options == 'object' && typeof options.headers == 'object' ? options.headers : {}
+  )
+  options = xtend({ auth: auth.user + ':' + auth.token }, options)
+  options.headers = headers
+  return options
 }
 
 
@@ -43,10 +46,14 @@ function ghpost (auth, url, data, options, callback) {
 function lister (auth, urlbase, options, callback) {
   var retdata = []
     , afterDate = (options.afterDate instanceof Date) && options.afterDate
+    , optqsobj
     , optqs
 
-  delete options.afterDate
-  optqs = qs.stringify(options)
+  // overloading use of 'options' is ... not great
+  optqsobj = xtend(options)
+  delete optqsobj.afterDate
+  delete optqsobj.headers
+  optqs = qs.stringify(optqsobj)
 
   ;(function next (url) {
 
@@ -62,6 +69,7 @@ function lister (auth, urlbase, options, callback) {
 
       var nextUrl = getNextUrl(res.headers.link)
         , createdAt
+
       if (nextUrl) {
         if (!afterDate || (
               (createdAt = retdata[retdata.length - 1].created_at) && new Date(createdAt) > afterDate
