@@ -60,6 +60,7 @@ function lister (auth, urlbase, options, callback) {
     if (optqs)
       url += '&' + optqs
 
+	  console.log(url)
     ghget(auth, url, options, function (err, data, res) {
       if (err)
         return callback(err)
@@ -90,7 +91,8 @@ function lister (auth, urlbase, options, callback) {
   function getNextUrl (link) {
     if (typeof link == 'undefined')
       return
-    var match = /<(.*)>; rel="next"/.exec(link)
+    var match = /<([^>]+)>; rel="next"/.exec(link)
+
     return match && match[1]
   }
 }

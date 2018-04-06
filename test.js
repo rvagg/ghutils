@@ -51,7 +51,7 @@ test('test list multi-page pulls, options.afterDate includes all', function (t) 
           }
         , {
               response : [ { test1: 'data3', created_at: new Date('2015-12-12T05:58:14.421Z').toISOString() }, { test2: 'data4', created_at: new Date('2015-12-11T05:58:14.421Z').toISOString() } ]
-            , headers  : { link: '<https://api.github.com/foobar?page=3>; rel="next"' }
+            , headers  : { link: '<https://api.github.com/foobar?page=1>; rel="prev", <https://api.github.com/foobar?page=3>; rel="next", <https://api.github.com/foobar?page=4>; rel="last", <https://api.github.com/foobar?page=1>; rel="first"' }
           }
         , { response: [] }
       ]
