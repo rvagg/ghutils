@@ -1,6 +1,6 @@
 {
   "name": "ghutils",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "description": "A collection of utility functions for dealing with the GitHub API",
   "main": "ghutils.js",
   "author": "Rod <rod@vagg.org> (http://r.va.gg/)",
