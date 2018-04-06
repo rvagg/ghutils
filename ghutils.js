@@ -60,7 +60,6 @@ function lister (auth, urlbase, options, callback) {
     if (optqs)
       url += '&' + optqs
 
-	  console.log(url)
     ghget(auth, url, options, function (err, data, res) {
       if (err)
         return callback(err)
