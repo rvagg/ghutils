@@ -17,6 +17,6 @@
     "test": "tape test.js"
   },
   "devDependencies": {
-    "tape": "~4.6.3"
+    "tape": "~4.9.0"
   }
 }
