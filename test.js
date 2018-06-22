@@ -138,7 +138,7 @@ test('data.message calls back with error', function (t) {
   server = util.makeServer(testData)
     .on('ready', function () {
       ghutils.ghget(xtend(auth), urlBase, {}, function (err, data) {
-        t.deepEqual(err, new Error('Error from GitHub: borked borked'))
+        t.is(err.message, 'Error from GitHub: borked borked')
       })
     })
     .on('request', util.verifyRequest(t, auth))
@@ -158,7 +158,7 @@ test('data.error calls back with error', function (t) {
   server = util.makeServer(testData)
     .on('ready', function () {
       ghutils.ghget(xtend(auth), urlBase, {}, function (err, data) {
-        t.deepEqual(err, new Error('Error from GitHub: borked borked'))
+        t.is(err.message, 'Error from GitHub: borked borked')
       })
     })
     .on('request', util.verifyRequest(t, auth))
