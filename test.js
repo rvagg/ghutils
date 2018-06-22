@@ -138,7 +138,30 @@ test('data.message calls back with error', function (t) {
   server = util.makeServer(testData)
     .on('ready', function () {
       ghutils.ghget(xtend(auth), urlBase, {}, function (err, data) {
-        t.deepEqual(err, new Error('Error from GitHub: borked borked'))
+        t.is(err.message, 'Error from GitHub: borked borked')
+      })
+    })
+    .on('request', util.verifyRequest(t, auth))
+    .on('close'  , util.verifyClose(t))
+
+})
+
+test('data.message calls back with error + extra', function (t) {
+  t.plan(4)
+
+  var auth     = { user: 'authuser', token: 'authtoken' }
+    , org      = 'testorg'
+    , testData = {
+        message: 'borked borked'
+      , errors: [{ foo: 'bar' }]
+    }
+    , urlBase  = 'https://api.github.com/foobar'
+    , server
+
+  server = util.makeServer(testData)
+    .on('ready', function () {
+      ghutils.ghget(xtend(auth), urlBase, {}, function (err, data) {
+        t.is(err.message, 'Error from GitHub: borked borked ([{"foo":"bar"}])')
       })
     })
     .on('request', util.verifyRequest(t, auth))
@@ -158,7 +181,30 @@ test('data.error calls back with error', function (t) {
   server = util.makeServer(testData)
     .on('ready', function () {
       ghutils.ghget(xtend(auth), urlBase, {}, function (err, data) {
-        t.deepEqual(err, new Error('Error from GitHub: borked borked'))
+        t.is(err.message, 'Error from GitHub: borked borked')
+      })
+    })
+    .on('request', util.verifyRequest(t, auth))
+    .on('close'  , util.verifyClose(t))
+
+})
+
+test('data.error calls back with error + extra', function (t) {
+  t.plan(4)
+
+  var auth     = { user: 'authuser', token: 'authtoken' }
+    , org      = 'testorg'
+    , testData = {
+        message: 'borked borked'
+      , errors: [{ foo: 'bar' }]
+    }
+    , urlBase  = 'https://api.github.com/foobar'
+    , server
+
+  server = util.makeServer(testData)
+    .on('ready', function () {
+      ghutils.ghget(xtend(auth), urlBase, {}, function (err, data) {
+        t.is(err.message, 'Error from GitHub: borked borked ([{"foo":"bar"}])')
       })
     })
     .on('request', util.verifyRequest(t, auth))

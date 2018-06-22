@@ -22,10 +22,17 @@ function handler (callback) {
       return callback(err)
 
     if (data && (data.error || data.message))
-      return callback(new Error('Error from GitHub: ' + (data.error || data.message)))
+      return callback(createError(data))
 
     callback(null, data, res)
   }
+}
+
+
+function createError (data) {
+  var message = data.error || data.message
+  var extra = data.errors ? ' (' + JSON.stringify(data.errors) + ')' : ''
+  return new Error('Error from GitHub: ' + message + extra)
 }
 
 
