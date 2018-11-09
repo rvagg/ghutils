@@ -12,6 +12,7 @@ function makeOptions (auth, options) {
   )
   options = xtend({ auth: auth.user + ':' + auth.token }, options)
   options.headers = headers
+  if (!options.auth) delete options.auth
   return options
 }
 
