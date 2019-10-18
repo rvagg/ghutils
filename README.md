@@ -1,6 +1,19 @@
 # ghutils
 
+[![Build Status](https://api.travis-ci.com/rvagg/ghutils.svg?branch=master)](https://travis-ci.com/rvagg/ghutils)
+
 **A collection of utility functions for dealing with the GitHub API**
+
+[![NPM](https://nodei.co/npm/ghissues.svg)](https://nodei.co/npm/ghissues/)
+
+Used by:
+
+* [ghissues](https://github.com/rvagg/ghissues) - a Node.js library to interact with the GitHub Issues API
+* [ghpulls](https://github.com/rvagg/ghpulls) - a Node.js library to interact with the GitHub Pull Request API
+* [ghrepos](https://github.com/rvagg/ghrepos) - a Node.js library to interact with the GitHub Repos API
+* [ghusers](https://github.com/rvagg/ghusers) - a Node.js library to interact with the GitHub Users API
+* [ghteams](https://github.com/rvagg/ghteams) - a Node.js library to interact with the GitHub Teams API
+* [ghreleases](https://github.com/ralphtheninja/ghreleases) - a Node.js library to interact with the GitHub Releases API
 
 ## API
 
