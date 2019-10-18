@@ -10,13 +10,14 @@
     "url": "https://github.com/rvagg/ghutils.git"
   },
   "dependencies": {
-    "jsonist": "~2.1.0",
-    "xtend": "~4.0.1"
+    "jsonist": "~3.0.1"
   },
   "scripts": {
-    "test": "tape test.js"
+    "lint": "standard *.js",
+    "test": "npm run lint && tape test.js"
   },
   "devDependencies": {
-    "tape": "~4.9.0"
+    "standard": "~14.3.1",
+    "tape": "~4.11.0"
   }
 }
