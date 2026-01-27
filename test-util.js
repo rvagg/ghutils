@@ -1,89 +1,129 @@
-const http = require('http')
-const EE = require('events').EventEmitter
-const jsonist = require('jsonist')
-const _jsonistget = jsonist.get
-const _jsonistpost = jsonist.post
+import http from 'node:http'
+import { EventEmitter } from 'node:events'
 
-function makeServer (data) {
-  const ee = new EE()
-  let i = 0
+/**
+ * Create a mock GitHub API server for testing
+ * @param {Array|Object} testData - Response data (array for multiple requests)
+ * @returns {Object} Server info with url and close method
+ */
+export async function createMockServer (testData) {
+  const requests = []
+  let requestIndex = 0
+  const dataArray = Array.isArray(testData) ? testData : [testData]
+  let baseUrl = ''
+
   const server = http.createServer((req, res) => {
-    ee.emit('request', req)
+    let body = ''
+    req.on('data', chunk => { body += chunk })
+    req.on('end', () => {
+      const requestInfo = {
+        method: req.method,
+        url: req.url,
+        headers: req.headers,
+        body: body ? JSON.parse(body) : null
+      }
+      requests.push(requestInfo)
 
-    const _data = Array.isArray(data) ? data[i++] : data
+      const responseData = dataArray[requestIndex++]
+      const statusCode = responseData?.statusCode || 200
+      const headers = { 'content-type': 'application/json', ...responseData?.headers }
 
-    if (_data && _data.headers && _data.headers.link) {
-      res.setHeader('link', _data.headers.link)
-    }
+      // Replace {{baseUrl}} placeholder in link headers
+      if (headers.link) {
+        headers.link = headers.link.replace(/\{\{baseUrl\}\}/g, baseUrl)
+      }
 
-    res.end(JSON.stringify((_data && _data.response) || _data))
-
-    if (!Array.isArray(data) || i === data.length) {
-      server.close()
-    }
+      res.writeHead(statusCode, headers)
+      res.end(JSON.stringify(responseData?.response ?? responseData ?? []))
+    })
   })
 
-  server.listen(0, (err) => {
-    if (err) {
-      return ee.emit('error', err)
-    }
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
 
-    jsonist.get = (url, opts, callback) => {
-      ee.emit('get', url, opts)
-      return _jsonistget('http://localhost:' + server.address().port, opts, callback)
-    }
+  const { port } = server.address()
+  baseUrl = `http://127.0.0.1:${port}`
 
-    jsonist.post = (url, data, opts, callback) => {
-      ee.emit('post', url, data, opts)
-      return _jsonistpost('http://localhost:' + server.address().port, data, opts, callback)
-    }
+  return {
+    baseUrl,
+    requests,
+    server,
+    close: () => new Promise((resolve) => server.close(resolve))
+  }
+}
 
-    ee.emit('ready')
+/**
+ * Create a mock server with custom request handler
+ */
+export async function createMockServerWithHandler (handler) {
+  const server = http.createServer((req, res) => {
+    res.setHeader('content-type', 'application/json')
+    handler(req, res, server)
   })
 
-  server.on('close', ee.emit.bind(ee, 'close'))
+  await new Promise((resolve) => server.listen(0, '127.0.0.1', resolve))
+
+  const { port } = server.address()
+  const baseUrl = `http://127.0.0.1:${port}`
+
+  const originalClose = server.close.bind(server)
+
+  return {
+    baseUrl,
+    server,
+    address: () => server.address(),
+    close: () => new Promise((resolve) => originalClose(resolve))
+  }
+}
+
+/**
+ * Legacy test utilities for backwards compatibility
+ * These work with the old event-based test pattern
+ */
+export function makeServer (data) {
+  const ee = new EventEmitter()
+
+  ;(async () => {
+    const { baseUrl, close } = await createMockServer(data)
+    ee.baseUrl = baseUrl
+    ee.close = close
+    ee.emit('ready', baseUrl)
+  })()
 
   return ee
 }
 
-function toAuth (auth) {
-  return `Basic ${Buffer.from(auth.user + ':' + auth.token).toString('base64')}`
+export function toAuth (auth) {
+  return `Bearer ${auth.token}`
 }
 
-function verifyRequest (t, auth) {
+export function verifyRequest (t, auth) {
   return function (req) {
-    t.ok(true, 'got request')
-    t.equal(req.headers.authorization, toAuth(auth), 'got auth header')
+    t.assert.ok(true, 'got request')
+    t.assert.strictEqual(req.headers.authorization, toAuth(auth), 'got auth header')
   }
 }
 
-function verifyUrl (t, urls) {
+export function verifyUrl (t, urls) {
   let i = 0
-  return function (_url) {
-    if (i === urls.length) {
-      return t.fail('too many urls/requests')
+  return function (url) {
+    if (i >= urls.length) {
+      t.assert.fail('too many urls/requests')
+      return
     }
-    t.equal(_url, urls[i++], 'correct url')
+    t.assert.strictEqual(url, urls[i++], 'correct url')
   }
 }
 
-function verifyClose (t) {
+export function verifyClose (t) {
   return function () {
-    t.ok(true, 'got close')
+    t.assert.ok(true, 'got close')
   }
 }
 
-function verifyData (t, data) {
-  return function (err, _data) {
-    t.notOk(err, 'no error')
-    t.ok((data === '' && _data === '') || _data, 'got data')
-    t.deepEqual(_data, data, 'got expected data')
+export function verifyData (t, expectedData) {
+  return function (err, data) {
+    t.assert.ifError(err)
+    t.assert.ok(data !== undefined, 'got data')
+    t.assert.deepStrictEqual(data, expectedData, 'got expected data')
   }
 }
-
-module.exports.makeServer = makeServer
-module.exports.toAuth = toAuth
-module.exports.verifyRequest = verifyRequest
-module.exports.verifyUrl = verifyUrl
-module.exports.verifyClose = verifyClose
-module.exports.verifyData = verifyData

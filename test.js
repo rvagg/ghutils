@@ -1,188 +1,186 @@
-const test = require('tape')
-const xtend = require('xtend')
-const util = require('./test-util')
-const ghutils = require('./')
+import { test } from 'node:test'
+import assert from 'node:assert'
+import { createMockServer, createMockServerWithHandler } from './test-util.js'
+import { ghget, ghpost, lister } from './ghutils.js'
 
-test('that lister follows res.headers.link', (t) => {
-  t.plan(13)
+test('ghget makes authenticated request', async () => {
+  const auth = { token: 'test-token' }
+  const responseData = { foo: 'bar' }
 
-  const auth = { user: 'authuser', token: 'authtoken' }
-  const testData = [
-    {
-      response: [{ test3: 'data3' }, { test4: 'data4' }],
-      headers: { link: '<https://somenexturl>; rel="next"' }
-    },
-    {
-      response: [{ test5: 'data5' }, { test6: 'data6' }],
-      headers: { link: '<https://somenexturl2>; rel="next"' }
-    },
-    []
-  ]
-  const urlBase = 'https://api.github.com/foobar'
+  const server = await createMockServer({ response: responseData })
+  try {
+    const { data } = await ghget(auth, server.baseUrl)
 
-  util.makeServer(testData)
-    .on('ready', () => {
-      const result = testData[0].response.concat(testData[1].response)
-      ghutils.lister(xtend(auth), urlBase, {}, util.verifyData(t, result))
-    })
-    .on('request', util.verifyRequest(t, auth))
-    .on('get', util.verifyUrl(t, [
-      'https://api.github.com/foobar',
-      'https://somenexturl',
-      'https://somenexturl2'
-    ]))
-    .on('close', util.verifyClose(t))
+    assert.deepStrictEqual(data, responseData)
+    assert.strictEqual(server.requests.length, 1)
+    assert.strictEqual(server.requests[0].headers.authorization, 'Bearer test-token')
+    assert.strictEqual(server.requests[0].headers.accept, 'application/vnd.github+json')
+  } finally {
+    await server.close()
+  }
 })
 
-test('test list multi-page pulls, options.afterDate includes all', (t) => {
-  t.plan(13)
+test('ghpost sends JSON data', async () => {
+  const auth = { token: 'test-token' }
+  const postData = { title: 'Test Issue' }
+  const responseData = { id: 123, title: 'Test Issue' }
 
-  const auth = { user: 'authuser', token: 'authtoken' }
-  const testData = [
-    {
-      response: [{ test1: 'data1', created_at: new Date('2015-12-14T05:58:14.421Z').toISOString() }, { test2: 'data2', created_at: new Date('2015-12-13T05:58:14.421Z').toISOString() }],
-      headers: { link: '<https://api.github.com/foobar?page=2>; rel="next"' }
-    },
-    {
-      response: [{ test1: 'data3', created_at: new Date('2015-12-12T05:58:14.421Z').toISOString() }, { test2: 'data4', created_at: new Date('2015-12-11T05:58:14.421Z').toISOString() }],
-      headers: { link: '<https://api.github.com/foobar?page=1>; rel="prev", <https://api.github.com/foobar?page=3>; rel="next", <https://api.github.com/foobar?page=4>; rel="last", <https://api.github.com/foobar?page=1>; rel="first"' }
-    },
-    { response: [] }
-  ]
-  const urlBase = 'https://api.github.com/foobar'
+  const server = await createMockServer({ response: responseData })
+  try {
+    const { data } = await ghpost(auth, server.baseUrl, postData)
 
-  util.makeServer(testData)
-    .on('ready', () => {
-      const result = testData[0].response.concat(testData[1].response)
-      ghutils.lister(xtend(auth), urlBase, { afterDate: new Date('2015-12-10T05:58:14.421Z') }, util.verifyData(t, result))
-    })
-    .on('request', util.verifyRequest(t, auth))
-    .on('get', util.verifyUrl(t, [
-      'https://api.github.com/foobar',
-      'https://api.github.com/foobar?page=2',
-      'https://api.github.com/foobar?page=3'
-    ]))
-    .on('close', util.verifyClose(t))
+    assert.deepStrictEqual(data, responseData)
+    assert.strictEqual(server.requests[0].method, 'POST')
+    assert.deepStrictEqual(server.requests[0].body, postData)
+    assert.strictEqual(server.requests[0].headers['content-type'], 'application/json')
+  } finally {
+    await server.close()
+  }
 })
 
-test('test list multi-page pulls, options.afterDate includes all', (t) => {
-  t.plan(10)
+test('lister follows pagination links', async () => {
+  const auth = { token: 'test-token' }
+  const page1 = [{ id: 1 }, { id: 2 }]
+  const page2 = [{ id: 3 }, { id: 4 }]
 
-  const auth = { user: 'authuser', token: 'authtoken' }
-  const testData = [
-    {
-      response: [{ test1: 'data1', created_at: new Date('2015-12-14T05:58:14.421Z').toISOString() }, { test2: 'data2', created_at: new Date('2015-12-13T05:58:14.421Z').toISOString() }],
-      headers: { link: '<https://api.github.com/foobar?page=2>; rel="next"' }
-    },
-    {
-      response: [{ test1: 'data3', created_at: new Date('2015-12-12T05:58:14.421Z').toISOString() }, { test2: 'data4', created_at: new Date('2015-12-11T05:58:14.421Z').toISOString() }],
-      headers: { link: '<https://api.github.com/foobar?page=3>; rel="next"' }
+  // Create server that dynamically sets link header based on request
+  let requestCount = 0
+  const mock = await createMockServerWithHandler((req, res) => {
+    requestCount++
+    const port = mock.address().port
+    if (requestCount === 1) {
+      res.setHeader('link', `<http://127.0.0.1:${port}/page2>; rel="next"`)
+      res.end(JSON.stringify(page1))
+    } else {
+      res.end(JSON.stringify(page2))
     }
-    // also tests that we don't fetch any more beyond this point, i.e. only 2 requests needed
+  })
+
+  try {
+    const results = await lister(auth, mock.baseUrl)
+    assert.deepStrictEqual(results, [...page1, ...page2])
+    assert.strictEqual(requestCount, 2)
+  } finally {
+    await mock.close()
+  }
+})
+
+test('lister handles empty response', async () => {
+  const auth = { token: 'test-token' }
+
+  const server = await createMockServer({ response: [] })
+  try {
+    const results = await lister(auth, server.baseUrl)
+
+    assert.deepStrictEqual(results, [])
+  } finally {
+    await server.close()
+  }
+})
+
+test('lister respects afterDate option', async () => {
+  const auth = { token: 'test-token' }
+  const page1 = [
+    { id: 1, created_at: '2024-01-15T00:00:00Z' },
+    { id: 2, created_at: '2024-01-14T00:00:00Z' }
   ]
-  const urlBase = 'https://api.github.com/foobar'
+  const page2 = [
+    { id: 3, created_at: '2024-01-13T00:00:00Z' },
+    { id: 4, created_at: '2024-01-10T00:00:00Z' }
+  ]
 
-  util.makeServer(testData)
-    .on('ready', () => {
-      const result = testData[0].response.concat([testData[1].response[0]])
-      ghutils.lister(xtend(auth), urlBase, { afterDate: new Date('2015-12-11T15:58:14.421Z') }, util.verifyData(t, result))
-    })
-    .on('request', util.verifyRequest(t, auth))
-    .on('get', util.verifyUrl(t, [
-      'https://api.github.com/foobar',
-      'https://api.github.com/foobar?page=2'
-    ]))
-    .on('close', util.verifyClose(t))
-})
+  let requestCount = 0
+  const mock = await createMockServerWithHandler((req, res) => {
+    requestCount++
+    const port = mock.address().port
+    if (requestCount === 1) {
+      res.setHeader('link', `<http://127.0.0.1:${port}/page2>; rel="next"`)
+      res.end(JSON.stringify(page1))
+    } else {
+      res.end(JSON.stringify(page2))
+    }
+  })
 
-test('valid response with null data calls back with null data', (t) => {
-  t.plan(5)
+  try {
+    const afterDate = new Date('2024-01-12T00:00:00Z')
+    const results = await lister(auth, mock.baseUrl, { afterDate })
 
-  const auth = { user: 'authuser', token: 'authtoken' }
-  const testData = null
-  const urlBase = 'https://api.github.com/foobar'
-
-  util.makeServer(testData)
-    .on('ready', () => {
-      ghutils.ghget(xtend(auth), urlBase, {}, (err, data) => {
-        t.notOk(err, 'no error')
-        t.deepEqual(data, testData, 'got expected data')
-      })
-    })
-    .on('request', util.verifyRequest(t, auth))
-    .on('close', util.verifyClose(t))
-})
-
-test('data.message calls back with error', (t) => {
-  t.plan(4)
-
-  const auth = { user: 'authuser', token: 'authtoken' }
-  const testData = { message: 'borked borked' }
-  const urlBase = 'https://api.github.com/foobar'
-
-  util.makeServer(testData)
-    .on('ready', () => {
-      ghutils.ghget(xtend(auth), urlBase, {}, (err, data) => {
-        t.is(err.message, 'Error from GitHub: borked borked')
-      })
-    })
-    .on('request', util.verifyRequest(t, auth))
-    .on('close', util.verifyClose(t))
-})
-
-test('data.message calls back with error + extra', (t) => {
-  t.plan(4)
-
-  const auth = { user: 'authuser', token: 'authtoken' }
-  const testData = {
-    message: 'borked borked',
-    errors: [{ foo: 'bar' }]
+    // Should only include items after 2024-01-12
+    assert.strictEqual(results.length, 3)
+    assert.deepStrictEqual(results.map(r => r.id), [1, 2, 3])
+  } finally {
+    await mock.close()
   }
-  const urlBase = 'https://api.github.com/foobar'
-
-  util.makeServer(testData)
-    .on('ready', () => {
-      ghutils.ghget(xtend(auth), urlBase, {}, (err, data) => {
-        t.is(err.message, 'Error from GitHub: borked borked ([{"foo":"bar"}])')
-      })
-    })
-    .on('request', util.verifyRequest(t, auth))
-    .on('close', util.verifyClose(t))
 })
 
-test('data.error calls back with error', (t) => {
-  t.plan(4)
+test('ghget throws on error response with message', async () => {
+  const auth = { token: 'test-token' }
+  const errorData = { message: 'Not Found' }
 
-  const auth = { user: 'authuser', token: 'authtoken' }
-  const testData = { error: 'borked borked' }
-  const urlBase = 'https://api.github.com/foobar'
-
-  util.makeServer(testData)
-    .on('ready', () => {
-      ghutils.ghget(xtend(auth), urlBase, {}, (err, data) => {
-        t.is(err.message, 'Error from GitHub: borked borked')
-      })
-    })
-    .on('request', util.verifyRequest(t, auth))
-    .on('close', util.verifyClose(t))
-})
-
-test('data.error calls back with error + extra', (t) => {
-  t.plan(4)
-
-  const auth = { user: 'authuser', token: 'authtoken' }
-  const testData = {
-    message: 'borked borked',
-    errors: [{ foo: 'bar' }]
+  const server = await createMockServer({ response: errorData, statusCode: 404 })
+  try {
+    await assert.rejects(
+      ghget(auth, server.baseUrl),
+      (err) => {
+        assert.strictEqual(err.message, 'Error from GitHub: Not Found')
+        return true
+      }
+    )
+  } finally {
+    await server.close()
   }
-  const urlBase = 'https://api.github.com/foobar'
+})
 
-  util.makeServer(testData)
-    .on('ready', () => {
-      ghutils.ghget(xtend(auth), urlBase, {}, (err, data) => {
-        t.is(err.message, 'Error from GitHub: borked borked ([{"foo":"bar"}])')
-      })
-    })
-    .on('request', util.verifyRequest(t, auth))
-    .on('close', util.verifyClose(t))
+test('ghget throws on error response with errors array', async () => {
+  const auth = { token: 'test-token' }
+  const errorData = {
+    message: 'Validation Failed',
+    errors: [{ field: 'title', code: 'missing' }]
+  }
+
+  const server = await createMockServer({ response: errorData, statusCode: 422 })
+  try {
+    await assert.rejects(
+      ghget(auth, server.baseUrl),
+      (err) => {
+        assert.ok(err.message.includes('Validation Failed'))
+        assert.ok(err.message.includes('missing'))
+        return true
+      }
+    )
+  } finally {
+    await server.close()
+  }
+})
+
+test('ghget supports legacy {user, token} auth format', async () => {
+  const auth = { user: 'testuser', token: 'test-token' }
+  const responseData = { success: true }
+
+  const server = await createMockServer({ response: responseData })
+  try {
+    const { data } = await ghget(auth, server.baseUrl)
+
+    assert.deepStrictEqual(data, responseData)
+    // Should still use Bearer token (user is ignored in modern auth)
+    assert.strictEqual(server.requests[0].headers.authorization, 'Bearer test-token')
+  } finally {
+    await server.close()
+  }
+})
+
+test('lister passes query options to URL', async () => {
+  const auth = { token: 'test-token' }
+
+  const server = await createMockServer({ response: [] })
+  try {
+    await lister(auth, server.baseUrl, { state: 'open', per_page: 100 })
+
+    assert.strictEqual(server.requests.length, 1)
+    const requestUrl = server.requests[0].url
+    assert.ok(requestUrl.includes('state=open'), 'should include state param')
+    assert.ok(requestUrl.includes('per_page=100'), 'should include per_page param')
+  } finally {
+    await server.close()
+  }
 })
