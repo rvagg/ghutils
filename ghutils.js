@@ -1,105 +1,146 @@
-const jsonist = require('jsonist')
-const qs = require('querystring')
-
 const apiRoot = 'https://api.github.com'
 
-function makeOptions (auth, options) {
-  const headers = Object.assign(
-    { 'user-agent': 'Magic Node.js application that does magic things' },
-    typeof options === 'object' && typeof options.headers === 'object' ? options.headers : {}
-  )
-  options = Object.assign({ auth: `${auth.user}:${auth.token}` }, options)
-  options.headers = headers
-  if (!options.auth) {
-    delete options.auth
+/**
+ * Build request options with auth headers
+ * Supports both legacy {user, token} and modern {token} auth formats
+ */
+function makeOptions (auth, options = {}) {
+  const headers = {
+    'user-agent': 'Magic Node.js application that does magic things',
+    accept: 'application/vnd.github+json',
+    ...options.headers
   }
-  return options
-}
 
-function handler (callback) {
-  return function responseHandler (err, data, res) {
-    if (err) {
-      return callback(err)
-    }
-
-    if (data && (data.error || data.message)) {
-      return callback(createError(data))
-    }
-
-    callback(null, data, res)
+  // Support both {token} (modern) and {user, token} (legacy) auth formats
+  if (auth?.token) {
+    headers.authorization = `Bearer ${auth.token}`
   }
+
+  return { ...options, headers }
 }
 
 function createError (data) {
   const message = data.error || data.message
   const extra = data.errors ? ` (${JSON.stringify(data.errors)})` : ''
-  return new Error(`Error from GitHub: ${message}${extra}`)
+  const err = new Error(`Error from GitHub: ${message}${extra}`)
+  err.data = data
+  return err
 }
 
-function ghget (auth, url, options, callback) {
-  options = makeOptions(auth, options)
-  jsonist.get(url, Object.assign(options, { followRedirects: true }), handler(callback))
-}
+async function handleResponse (res) {
+  const data = res.status === 204 ? null : await res.json()
 
-function ghpost (auth, url, data, options, callback) {
-  options = makeOptions(auth, options)
-  jsonist.post(url, data, options, handler(callback))
-}
-
-function lister (auth, urlbase, options, callback) {
-  let retdata = []
-  const afterDate = (options.afterDate instanceof Date) && options.afterDate
-
-  // overloading use of 'options' is ... not great
-  const optqsobj = Object.assign(options)
-  delete optqsobj.afterDate
-  delete optqsobj.headers
-  const optqs = qs.stringify(optqsobj)
-
-  ;(function next (url) {
-    if (optqs) {
-      url += '&' + optqs
-    }
-
-    ghget(auth, url, options, (err, data, res) => {
-      if (err) {
-        return callback(err)
-      }
-
-      if (data.length) {
-        retdata.push.apply(retdata, data)
-      }
-
-      const nextUrl = getNextUrl(res.headers.link)
-      let createdAt
-
-      if (nextUrl) {
-        if (!afterDate || ((createdAt = retdata[retdata.length - 1].created_at) && new Date(createdAt) > afterDate)) {
-          return next(nextUrl)
-        }
-      }
-
-      if (afterDate) {
-        retdata = retdata.filter((data) => {
-          return !data.created_at || new Date(data.created_at) > afterDate
-        })
-      }
-      callback(null, retdata)
-    })
-  }(urlbase))
-
-  function getNextUrl (link) {
-    if (typeof link === 'undefined') {
-      return
-    }
-    const match = /<([^>]+)>; rel="next"/.exec(link)
-    return match && match[1]
+  if (!res.ok || (data && (data.error || data.message))) {
+    throw createError(data || { message: res.statusText })
   }
+
+  return { data, res }
 }
 
-module.exports.makeOptions = makeOptions
-module.exports.ghpost = ghpost
-module.exports.ghget = ghget
-module.exports.handler = handler
-module.exports.lister = lister
-module.exports.apiRoot = apiRoot
+async function ghget (auth, url, options = {}) {
+  const opts = makeOptions(auth, options)
+  const res = await fetch(url, {
+    method: 'GET',
+    headers: opts.headers,
+    redirect: 'follow'
+  })
+  return handleResponse(res)
+}
+
+async function ghpost (auth, url, data, options = {}) {
+  const opts = makeOptions(auth, options)
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      ...opts.headers
+    },
+    body: JSON.stringify(data)
+  })
+  return handleResponse(res)
+}
+
+async function ghpatch (auth, url, data, options = {}) {
+  const opts = makeOptions(auth, options)
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'content-type': 'application/json',
+      ...opts.headers
+    },
+    body: JSON.stringify(data)
+  })
+  return handleResponse(res)
+}
+
+async function ghdelete (auth, url, options = {}) {
+  const opts = makeOptions(auth, options)
+  const res = await fetch(url, {
+    method: 'DELETE',
+    headers: opts.headers
+  })
+  return handleResponse(res)
+}
+
+function getNextUrl (linkHeader) {
+  if (!linkHeader) return null
+  const match = /<([^>]+)>;\s*rel="next"/.exec(linkHeader)
+  return match?.[1] || null
+}
+
+async function lister (auth, urlBase, options = {}) {
+  let results = []
+  const afterDate = options.afterDate instanceof Date ? options.afterDate : null
+
+  // Build query string from options (excluding special options)
+  const queryParams = new URLSearchParams()
+  for (const [key, value] of Object.entries(options)) {
+    if (key !== 'afterDate' && key !== 'headers' && value !== undefined) {
+      queryParams.set(key, value)
+    }
+  }
+  const queryString = queryParams.toString()
+
+  let url = urlBase
+  if (queryString) {
+    url += (url.includes('?') ? '&' : '?') + queryString
+  }
+
+  while (url) {
+    const { data, res } = await ghget(auth, url, options)
+
+    if (Array.isArray(data) && data.length > 0) {
+      results = results.concat(data)
+    }
+
+    const nextUrl = getNextUrl(res.headers.get('link'))
+
+    if (nextUrl && afterDate) {
+      const lastItem = results[results.length - 1]
+      const createdAt = lastItem?.created_at
+      if (createdAt && new Date(createdAt) <= afterDate) {
+        break
+      }
+    }
+
+    url = nextUrl
+  }
+
+  if (afterDate) {
+    results = results.filter((item) => {
+      return !item.created_at || new Date(item.created_at) > afterDate
+    })
+  }
+
+  return results
+}
+
+export {
+  apiRoot,
+  makeOptions,
+  ghget,
+  ghpost,
+  ghpatch,
+  ghdelete,
+  lister
+}
