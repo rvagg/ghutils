@@ -105,7 +105,20 @@ const recentIssues = await lister(auth, 'https://api.github.com/repos/owner/repo
 
 ## Authentication
 
-All methods accept an `auth` object with a `token` property:
+All methods accept an `auth` object with a `token` property. Use [ghauth](https://github.com/rvagg/ghauth) to create and manage persistent GitHub authentication tokens for command-line apps:
+
+```js
+import ghauth from 'ghauth'
+
+const auth = await ghauth({
+  configName: 'my-app',
+  clientId: 'your-github-oauth-app-client-id',
+  scopes: ['repo']
+})
+// auth = { token: 'ghp_xxxxxxxxxxxx', user: 'username' }
+```
+
+Or provide the token directly:
 
 ```js
 const auth = { token: 'ghp_xxxxxxxxxxxx' }
