@@ -1,3 +1,9 @@
+## [5.0.3](https://github.com/rvagg/ghutils/compare/v5.0.2...v5.0.3) (2026-04-28)
+
+### Trivial Changes
+
+* **deps:** bump actions/setup-node from 6 to 6.3.0 ([#23](https://github.com/rvagg/ghutils/issues/23)) ([5be3d9b](https://github.com/rvagg/ghutils/commit/5be3d9b67178f7dbf4d69dfb1b512243d67a0a6c))
+
 ## [5.0.2](https://github.com/rvagg/ghutils/compare/v5.0.1...v5.0.2) (2026-01-27)
 
 ### Trivial Changes
