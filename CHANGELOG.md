@@ -1,3 +1,9 @@
+## [5.0.6](https://github.com/rvagg/ghutils/compare/v5.0.5...v5.0.6) (2026-06-22)
+
+### Trivial Changes
+
+* **deps:** bump actions/checkout from 6.0.2 to 6.0.3 ([#26](https://github.com/rvagg/ghutils/issues/26)) ([66a27c2](https://github.com/rvagg/ghutils/commit/66a27c2e645c478cbaa36c9200db96f74a3712a5))
+
 ## [5.0.5](https://github.com/rvagg/ghutils/compare/v5.0.4...v5.0.5) (2026-06-04)
 
 ### Trivial Changes
