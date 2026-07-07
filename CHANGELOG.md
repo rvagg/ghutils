@@ -1,3 +1,5 @@
+## [5.0.8](https://github.com/rvagg/ghutils/compare/v5.0.7...v5.0.8) (2026-07-07)
+
 ## [5.0.7](https://github.com/rvagg/ghutils/compare/v5.0.6...v5.0.7) (2026-06-29)
 
 ### Trivial Changes
