@@ -1,3 +1,5 @@
+## [5.0.12](https://github.com/rvagg/ghutils/compare/v5.0.11...v5.0.12) (2026-07-29)
+
 ## [5.0.11](https://github.com/rvagg/ghutils/compare/v5.0.10...v5.0.11) (2026-07-29)
 
 ## [5.0.10](https://github.com/rvagg/ghutils/compare/v5.0.9...v5.0.10) (2026-07-29)
