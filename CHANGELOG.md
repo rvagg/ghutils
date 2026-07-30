@@ -1,12 +1,32 @@
 ## [5.0.12](https://github.com/rvagg/ghutils/compare/v5.0.11...v5.0.12) (2026-07-29)
 
+### Trivial Changes
+
+* **ci:** slow down dependabot, pin actions to hashes, add depsound ([#33](https://github.com/rvagg/ghutils/issues/33)) ([ba6996e](https://github.com/rvagg/ghutils/commit/ba6996e554541f96ae14fb04f1c36a334f41d67b))
+
 ## [5.0.11](https://github.com/rvagg/ghutils/compare/v5.0.10...v5.0.11) (2026-07-29)
+
+### Trivial Changes
+
+* **deps-dev:** bump @semantic-release/changelog from 6.0.3 to 7.0.0 ([#32](https://github.com/rvagg/ghutils/issues/32)) ([b40386a](https://github.com/rvagg/ghutils/commit/b40386a21b567af9431c8ed34e2ab2a49581e12b))
 
 ## [5.0.10](https://github.com/rvagg/ghutils/compare/v5.0.9...v5.0.10) (2026-07-29)
 
+### Trivial Changes
+
+* **deps-dev:** bump @semantic-release/git from 10.0.1 to 11.0.0 ([#31](https://github.com/rvagg/ghutils/issues/31)) ([61e69f9](https://github.com/rvagg/ghutils/commit/61e69f9dc81b9fc7b44d60f515e6269a2f1a97fb))
+
 ## [5.0.9](https://github.com/rvagg/ghutils/compare/v5.0.8...v5.0.9) (2026-07-21)
 
+### Trivial Changes
+
+* **deps:** bump actions/setup-node from 6.4.0 to 7.0.0 ([#29](https://github.com/rvagg/ghutils/issues/29)) ([d655cd1](https://github.com/rvagg/ghutils/commit/d655cd171b4bed4e658ba8dd3ca6da75d0c77584))
+
 ## [5.0.8](https://github.com/rvagg/ghutils/compare/v5.0.7...v5.0.8) (2026-07-07)
+
+### Trivial Changes
+
+* **deps-dev:** bump conventional-changelog-conventionalcommits ([#28](https://github.com/rvagg/ghutils/issues/28)) ([c07fd36](https://github.com/rvagg/ghutils/commit/c07fd36ebfbf56c85f8d3fd242331d86c781412e))
 
 ## [5.0.7](https://github.com/rvagg/ghutils/compare/v5.0.6...v5.0.7) (2026-06-29)
 
