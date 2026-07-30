@@ -1,3 +1,9 @@
+## [5.0.13](https://github.com/rvagg/ghutils/compare/v5.0.12...v5.0.13) (2026-07-30)
+
+### Trivial Changes
+
+* downgrade broken changelog maker, backfill entries ([#35](https://github.com/rvagg/ghutils/issues/35)) ([507ef1e](https://github.com/rvagg/ghutils/commit/507ef1ef617963d24fbb1233031a90609259261d))
+
 ## [5.0.12](https://github.com/rvagg/ghutils/compare/v5.0.11...v5.0.12) (2026-07-29)
 
 ### Trivial Changes
