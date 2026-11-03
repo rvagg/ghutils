@@ -1,3 +1,9 @@
+## [5.0.17](https://github.com/rvagg/ghutils/compare/v5.0.16...v5.0.17) (2026-11-03)
+
+### Trivial Changes
+
+* **deps:** bump the github-actions-minor-patch group with 2 updates ([#43](https://github.com/rvagg/ghutils/issues/43)) ([46e7fa8](https://github.com/rvagg/ghutils/commit/46e7fa8ba01abbb30ec0c5892604087ac204cf5e))
+
 ## [5.0.16](https://github.com/rvagg/ghutils/compare/v5.0.15...v5.0.16) (2026-10-27)
 
 ### Trivial Changes
